@@ -67,6 +67,14 @@ python ibm_cos_debug.py
 
 正規表現を使ったシンプルな XML 解析例。
 
+#### 5. ファイル操作（アップロード・ダウンロード）
+
+```bash
+python ibm_cos_file_operations.py
+```
+
+ファイルのアップロード、ダウンロード、読み込み、削除のサンプル。
+
 ### プログラムでの使用
 
 ```python
@@ -95,6 +103,7 @@ for file in files:
 - `ibm_cos_simple.py` - 最もシンプルなサンプル
 - `ibm_cos_direct.py` - 直接 HTTP リクエストのサンプル
 - `ibm_cos_debug.py` - XML を正規表現で解析するサンプル
+- `ibm_cos_file_operations.py` - ファイル操作のサンプル
 - `requirements.txt` - 必要な Python ライブラリ
 - `.env` - 環境変数設定ファイル
 
@@ -106,6 +115,10 @@ for file in files:
 - ✅ バケット作成
 - ✅ ファイル一覧取得
 - ✅ ファイル詳細情報取得
+- ✅ ファイルアップロード
+- ✅ ファイルダウンロード
+- ✅ テキスト読み込み・書き込み
+- ✅ ファイル削除
 
 ### 認証方式
 
