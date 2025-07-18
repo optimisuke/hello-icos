@@ -75,6 +75,22 @@ python ibm_cos_file_operations.py
 
 ファイルのアップロード、ダウンロード、読み込み、削除のサンプル。
 
+#### 6. IBM COS SDK を使用したファイル操作（推奨）
+
+```bash
+python ibm_cos_sdk.py
+```
+
+IBM 専用 SDK を使用したファイル操作のサンプル。最も IBM COS に最適化されており、完全に動作します。
+
+#### 7. boto3を使用したファイル操作（参考）
+
+```bash
+python ibm_cos_boto3.py
+```
+
+boto3を使用したファイル操作のサンプル。ただし、IBM COSでは認証が複雑なため、通常のHTTPリクエストを推奨します。
+
 ### プログラムでの使用
 
 ```python
@@ -104,6 +120,8 @@ for file in files:
 - `ibm_cos_direct.py` - 直接 HTTP リクエストのサンプル
 - `ibm_cos_debug.py` - XML を正規表現で解析するサンプル
 - `ibm_cos_file_operations.py` - ファイル操作のサンプル
+- `ibm_cos_sdk.py` - IBM 専用 SDK を使用したファイル操作のサンプル（推奨）
+- `ibm_cos_boto3.py` - boto3を使用したファイル操作のサンプル（参考）
 - `requirements.txt` - 必要な Python ライブラリ
 - `.env` - 環境変数設定ファイル
 
@@ -169,3 +187,13 @@ IBM_API_KEY, IBM_RESOURCE_INSTANCE_ID, IBM_ENDPOINT_URL を .env に設定して
 ### boto3 との違い
 
 このクライアントは標準の HTTP リクエストを使用しています。boto3 で IBM COS にアクセスする場合、AWS 署名と IBM OAuth 認証の競合により複雑になるため、直接 HTTP リクエストを採用しています。
+
+#### boto3 を使用する場合の注意点
+
+- `ibm_cos_boto3.py` は boto3 を使用したサンプルですが、認証が複雑です
+- IBM COS では OAuth 認証が必要なため、標準の AWS 認証と競合します
+- 実用的な用途では `ibm_cos_file_operations.py` を推奨します
+
+## ライセンス
+
+MIT License
