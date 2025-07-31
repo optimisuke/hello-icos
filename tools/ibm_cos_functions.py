@@ -1,20 +1,27 @@
-import os
 import ibm_boto3
 from ibm_botocore.client import Config
-from dotenv import load_dotenv
+from ibm_watsonx_orchestrate.agent_builder.tools import tool, ToolPermission
+from ibm_watsonx_orchestrate.run import connections
+from ibm_watsonx_orchestrate.client.connections import ConnectionType
+
+
+CONNECTION_ICOS = 'icos'
+CONNECTION_ICOS_HOST = 'host'
+CONNECTION_ICOS_APIKEY = 'apikey'
+CONNECTION_ICOS_INSTANCE_ID = 'instance_id'
 
 
 def _get_cos_client():
     """IBM COS クライアントを取得（各関数で共通して使用）"""
-    load_dotenv()
-
-    api_key = os.getenv('IBM_API_KEY')
-    service_instance_id = os.getenv('IBM_RESOURCE_INSTANCE_ID')
-    endpoint_url = os.getenv('IBM_ENDPOINT_URL')
+    # 接続情報の取得
+    icos_connection = connections.key_value(CONNECTION_ICOS)
+    api_key = icos_connection[CONNECTION_ICOS_APIKEY]
+    service_instance_id = icos_connection[CONNECTION_ICOS_INSTANCE_ID]
+    endpoint_url = icos_connection[CONNECTION_ICOS_HOST]
 
     if not api_key or not service_instance_id or not endpoint_url:
         raise ValueError(
-            "環境変数が設定されていません: IBM_API_KEY, IBM_RESOURCE_INSTANCE_ID, IBM_ENDPOINT_URL")
+            "接続情報が設定されていません: apikey, instance_id, host")
 
     return ibm_boto3.client(
         's3',
@@ -25,21 +32,25 @@ def _get_cos_client():
     )
 
 
-def upload_text(bucket_name, text_content, object_key):
+@tool(
+    name="upload_text",
+    description="テキストをIBM COSにアップロード",
+    permission=ToolPermission.ADMIN,
+    expected_credentials=[
+        {"app_id": CONNECTION_ICOS, "type": ConnectionType.KEY_VALUE}
+    ]
+)
+def upload_text(bucket_name: str, text_content: str) -> bool:
     """
     テキストをIBM COSにアップロード
 
-    Args:
-        bucket_name (str): アップロード先のバケット名
-        text_content (str): アップロードするテキスト内容
-        object_key (str): オブジェクトキー（ファイル名）
-
-    Returns:
-        bool: アップロード成功時True、失敗時False
+    :param bucket_name: アップロード先のバケット名
+    :param text_content: アップロードするテキスト内容
+    :returns: アップロード成功時True、失敗時False
     """
     try:
         cos_client = _get_cos_client()
-
+        object_key = "test.txt"
         cos_client.put_object(
             Bucket=bucket_name,
             Key=object_key,
@@ -55,15 +66,20 @@ def upload_text(bucket_name, text_content, object_key):
         return False
 
 
-def download_file(bucket_name):
+@tool(
+    name="download_file",
+    description="指定したバケットから最新のテキストファイルをダウンロード",
+    permission=ToolPermission.ADMIN,
+    expected_credentials=[
+        {"app_id": CONNECTION_ICOS, "type": ConnectionType.KEY_VALUE}
+    ]
+)
+def download_file(bucket_name: str) -> str:
     """
     指定したバケットから最新のテキストファイルをダウンロードしてテキストを返す
 
-    Args:
-        bucket_name (str): ダウンロード元のバケット名
-
-    Returns:
-        str: ダウンロードしたテキスト内容、失敗時はNone
+    :param bucket_name: ダウンロード元のバケット名
+    :returns: ダウンロードしたテキスト内容、失敗時はNone
     """
     try:
         cos_client = _get_cos_client()
@@ -104,15 +120,20 @@ def download_file(bucket_name):
         return None
 
 
-def list_objects(bucket_name):
+@tool(
+    name="list_objects",
+    description="指定したバケット内のオブジェクト一覧を取得",
+    permission=ToolPermission.ADMIN,
+    expected_credentials=[
+        {"app_id": CONNECTION_ICOS, "type": ConnectionType.KEY_VALUE}
+    ]
+)
+def list_objects(bucket_name: str) -> list:
     """
     指定したバケット内のオブジェクト一覧を取得
 
-    Args:
-        bucket_name (str): 一覧を取得するバケット名
-
-    Returns:
-        list: オブジェクト情報のリスト、失敗時は空のリスト
+    :param bucket_name: 一覧を取得するバケット名
+    :returns: オブジェクト情報のリスト、失敗時は空のリスト
     """
     try:
         cos_client = _get_cos_client()
@@ -136,12 +157,19 @@ def list_objects(bucket_name):
         return []
 
 
-def list_buckets():
+@tool(
+    name="list_buckets",
+    description="バケット一覧を取得",
+    permission=ToolPermission.ADMIN,
+    expected_credentials=[
+        {"app_id": CONNECTION_ICOS, "type": ConnectionType.KEY_VALUE}
+    ]
+)
+def list_buckets() -> list:
     """
     バケット一覧を取得
 
-    Returns:
-        list: バケット情報のリスト、失敗時は空のリスト
+    :returns: バケット情報のリスト、失敗時は空のリスト
     """
     try:
         cos_client = _get_cos_client()
@@ -163,16 +191,21 @@ def list_buckets():
         return []
 
 
-def delete_object(bucket_name, object_key):
+@tool(
+    name="delete_object",
+    description="指定したオブジェクトを削除",
+    permission=ToolPermission.ADMIN,
+    expected_credentials=[
+        {"app_id": CONNECTION_ICOS, "type": ConnectionType.KEY_VALUE}
+    ]
+)
+def delete_object(bucket_name: str, object_key: str) -> bool:
     """
     指定したオブジェクトを削除
 
-    Args:
-        bucket_name (str): 削除対象のバケット名
-        object_key (str): 削除対象のオブジェクトキー
-
-    Returns:
-        bool: 削除成功時True、失敗時False
+    :param bucket_name: 削除対象のバケット名
+    :param object_key: 削除対象のオブジェクトキー
+    :returns: 削除成功時True、失敗時False
     """
     try:
         cos_client = _get_cos_client()
@@ -185,69 +218,3 @@ def delete_object(bucket_name, object_key):
     except Exception as e:
         print(f"エラー: オブジェクト削除に失敗しました: {e}")
         return False
-
-
-# 使用例
-if __name__ == "__main__":
-    from datetime import datetime
-
-    # テスト用のバケット名
-    test_bucket = "test-bucket-direct"
-
-    print("=== IBM COS 関数形式のサンプル ===")
-
-    # 1. バケット一覧を取得
-    print("\n1. バケット一覧")
-    buckets = list_buckets()
-    for bucket in buckets:
-        print(f"  - {bucket['name']} (作成日: {bucket['creation_date']})")
-
-    # 2. テキストをアップロード
-    print("\n2. テキストのアップロード")
-    sample_text = f"関数形式でアップロードしたテキストです。\n作成時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    upload_text(test_bucket, sample_text, "functions/sample1.txt")
-
-    # # 3. 別のテキストをアップロード（最新テストのため）
-    # print("\n3. 別のテキストのアップロード")
-    # sample_text2 = f"2番目のテキストファイルです。\n作成時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    # upload_text(test_bucket, sample_text2, "functions/sample2.txt")
-
-    # # 4. オブジェクト一覧を取得
-    # print("\n4. オブジェクト一覧")
-    # objects = list_objects(test_bucket)
-    # for obj in objects:
-    #     if obj['key'].startswith("functions/"):
-    #         print(f"  - {obj['key']} ({obj['size']} bytes, 更新: {obj['last_modified']})")
-
-    # # 5. 最新のテキストファイルをダウンロード
-    # print("\n5. 最新のテキストファイルをダウンロード")
-    # downloaded_text = download_file(test_bucket)
-    # if downloaded_text:
-    #     print("ダウンロードしたテキスト内容:")
-    #     print(downloaded_text)
-
-    # # 6. JSON形式のテキストもアップロード
-    # print("\n6. JSON形式のテキストをアップロード")
-    # import json
-    # json_data = {
-    #     "name": "関数形式テスト",
-    #     "timestamp": datetime.now().isoformat(),
-    #     "data": [1, 2, 3, 4, 5]
-    # }
-    # json_text = json.dumps(json_data, indent=2, ensure_ascii=False)
-    # upload_text(test_bucket, json_text, "functions/data.txt")
-
-    # 7. 再度最新ファイルをダウンロード（JSONファイルが最新になるはず）
-    print("\n7. 再度最新のテキストファイルをダウンロード")
-    latest_text = download_file(test_bucket)
-    if latest_text:
-        print("最新のテキスト内容:")
-        print(latest_text)
-
-    # 8. クリーンアップ（コメントアウト）
-    print("\n8. クリーンアップ（実行する場合はコメントアウトを外してください）")
-    # delete_object(test_bucket, "functions/sample1.txt")
-    # delete_object(test_bucket, "functions/sample2.txt")
-    # delete_object(test_bucket, "functions/data.txt")
-
-    print("\n=== 関数形式のサンプル完了 ===")
